@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Duck Walking Animation — Play + BGM</title>
+  <style>
+    :root{
+      --color-yellow:#8b7355;
+      --color-light-orange-1:#a89176;
+      --color-light-orange-2:#8b7355;
+      --color-orange:#ff6b35;
+      --color-blue-1:#48befd;
+      --color-blue-2:#3ba5f1;
+      --color-backpack:#95a5a6;
+      --color-backpack-dark:#7f8c8d;
+      --color-gold:#f39c12;
+      --color-green-head:#2d5016;
+      --color-neck-ring:#ffffff;
+      --duck-speed:1s;
+      --duck-speed-half:calc(var(--duck-speed)/2);
+      --ui-size:clamp(3rem, 5vw, 4.2rem);
+    }
+
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%}
+    body{
+      min-height:100vh;
+      display:grid;
+      place-items:center;
+      background:linear-gradient(180deg,var(--color-blue-1),#7cc6ff 80%);
+      font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+      overflow:hidden;
+      padding:env(safe-area-inset);
+    }
+
+    .stage{
+      width:min(92vw,720px);
+      height:min(70vh,640px);
+      position:relative;
+      display:grid;
+      place-items:center;
+      touch-action:manipulation;
+    }
+
+    /* Play button with soft cartoony style */
+    .play-btn{
+      --size:var(--ui-size);
+      width:var(--size);
+      height:var(--size);
+      border-radius:999px;
+      display:grid;
+      place-items:center;
+      background:#8b5e3c; /* Brown outline */
+      padding:0.3rem;
+      border:none;
+      cursor:pointer;
+      z-index:40;
+      position:absolute;
+      top:50%;
+      left:50%;
+      transform:translate(-50%, -50%);
+      }
+
+    .play-btn-inner{
+      width:100%;
+      height:100%;
+      border-radius:999px;
+      background:#f5eedc; /* Cream inner circle */
+      display:grid;
+      place-items:center;
+    }
+
+    .play-icon{
+      width:50%;
+      height:50%;
+      fill:#8b5e3c; /* Brown play symbol */
+    }
+
+    .started .play-btn{opacity:0;pointer-events:none;transition:opacity .3s ease;}
+
+    /* Clouds */
+    .cloud{position:absolute;top:8vh;left:0;width:5.4rem;height:3rem;border-radius:6rem 6rem 0 1rem;background:#fff;transform:translateX(110vw);animation:cloud-animation-1 12s linear infinite}
+    .cloud--2,.cloud--4{top:20vh;transform:translateX(120vw) scale(.86);animation:cloud-animation-2 11s 2.5s linear infinite}
+    .cloud--3{animation-delay:5s}
+    .cloud--4{animation-delay:7.5s}
+    .cloud::after{content:"";position:absolute;width:6rem;height:3.5rem;bottom:0;border-radius:6rem 10rem 1rem 0;transform:translateX(3rem);background:#fff}
+    .cloud::before{content:"";position:absolute;width:4rem;height:3rem;bottom:2rem;border-radius:10rem 10rem 0 0;transform:translateX(2rem);background:#fff}
+
+    @keyframes cloud-animation-1{0%{transform:translateX(110vw)}100%{transform:translateX(-50vw)}}
+    @keyframes cloud-animation-2{0%{transform:translateX(110vw) scale(.8)}100%{transform:translateX(-50vw) scale(.8)}}
+
+    .duck__wrapper{display:grid;place-items:center;position:relative;height:100%;width:100%}
+    .duck{display:flex;flex-direction:column;position:relative;align-items:center;gap:.4rem;transform-origin:center bottom;transition:transform .6s cubic-bezier(.2,.9,.2,1),opacity .4s ease;opacity:0;transform:translateY(10vh) scale(.96) translateZ(0);touch-action:none;}
+    .started .duck{opacity:1;transform:translateY(0) scale(1) translateZ(0)}
+
+    @media (max-width:420px){
+      :root{--ui-size:clamp(2.6rem,8vw,3.4rem)}
+      .duck{transform:translateY(6vh) scale(.86)}
+      .started .duck{transform:translateY(0) scale(.92)}
+      .speech-bubble{font-size:clamp(.9rem,3.5vw,1.05rem);padding:.6rem .9rem}
+      .duck__head{width:4.8rem;height:3.1rem}
+      .duck__body{width:7.2rem;height:4rem}
+      .duck__neck-stripe{width:5.2rem}
+    }
+
+    /* Duck parts */
+    .duck__head{align-self:flex-end;width:6rem;height:4rem;border-radius:8rem 8rem 0 0;background:var(--color-green-head);position:relative;z-index:1}
+    .duck__head::after,.duck__head::before{content:"";position:absolute;border-radius:1rem;background:var(--color-green-head);width:.4rem;height:2rem;top:0}
+    .duck__head::after{left:44%;transform:translate(-50%,-50%) rotate(-30deg)}
+    .duck__head::before{left:45%;transform:translate(-50%,-50%) rotate(10deg)}
+
+    .duck__white{position:absolute;top:.8rem;left:.8rem;width:.6rem;height:1.3rem;transform:rotate(40deg);border-radius:50%;background:#fff;z-index:2}
+    .duck__neck-stripe{position:absolute;top:3.9rem;left:63.5%;transform:translateX(-50%);width:7rem;height:.5rem;background:#fff;border-radius:.1rem;z-index:1}
+    .duck__eye{position:absolute;bottom:1.2rem;right:1rem;width:.8rem;height:.8rem;border-radius:50%;background:#000;animation:eye-animation 1s infinite linear}
+    .duck__mouth{position:absolute;right:0;top:40%;width:1rem;height:1.2rem;transform:translate(90%,-50%);clip-path:polygon(0 0,100% 40%,100% 60%,0% 100%);border-radius:0 1rem 1rem 0;background:var(--color-orange)}
+
+    .duck__body{width:9.5rem;height:5rem;border-radius:1rem 0 16rem 16rem;background:var(--color-yellow);position:relative;overflow:hidden}
+    .duck__body::after{content:"";position:absolute;width:105%;height:200%;left:50%;top:-95%;transform:translate(-50%,0.02rem) rotate(-6deg);border-radius:50%;border-bottom:1rem solid var(--color-light-orange-2)}
+    .duck__neck-ring{position:absolute;top:3.9rem;left:50%;transform:translateX(-50%);width:6rem;height:1rem;background:var(--color-neck-ring);z-index:0}
+
+    .duck__backpack{position:absolute;left:.8rem;top:50%;width:3.5rem;height:3rem;border-radius:.8rem;background:var(--color-backpack);transform:translateY(-50%);z-index:2;box-shadow:inset -0.3rem 0 0.5rem rgba(0,0,0,.2)}
+    .duck__backpack::before{content:"";position:absolute;top:.5rem;left:0;width:100%;height:1rem;background:var(--color-backpack-dark);border-radius:.5rem .5rem 0 0}
+    .duck__backpack::after{content:"";position:absolute;top:1.2rem;left:50%;transform:translateX(-50%);width:.6rem;height:.8rem;background:var(--color-gold);border-radius:.2rem;box-shadow:0 0.1rem 0.2rem rgba(0,0,0,.3),inset 0 0.1rem 0.1rem rgba(255,255,255,.3)}
+    .duck__backpack-lock{position:absolute;bottom:.8rem;left:50%;transform:translateX(-50%);width:1.5rem;height:.8rem;background:var(--color-backpack-dark);border-radius:.3rem;box-shadow:0 .1rem .2rem rgba(0,0,0,.3)}
+
+    .speech-bubble{position:absolute;top:-6rem;left:50%;transform:translateX(-50%);background:#fff;padding:.75rem 1.25rem;border-radius:1rem;box-shadow:0 .3rem .8rem rgba(0,0,0,.2);white-space:nowrap;font-weight:700;color:#333;display:flex;align-items:center;gap:.5rem}
+    .speech-bubble::after{content:"";position:absolute;bottom:-.8rem;left:50%;transform:translateX(-50%);width:0;height:0;border-left:.8rem solid transparent;border-right:.8rem solid transparent;border-top:.8rem solid #fff}
+
+    .duck__foot{position:absolute;width:.6rem;height:2rem;background:var(--color-orange);z-index:-1}
+    .duck__foot::after{content:"";position:absolute;width:2rem;height:.6rem;bottom:0;left:-.5rem;background:var(--color-orange);border-radius:1rem}
+    .duck__foot--1,.duck__foot--2{left:40%;bottom:0;transform:translate(-50%,80%)}
+    .duck__foot--1{animation:foot-ans var(--duck-speed) linear infinite}
+    .duck__foot--2{animation:foot-ans var(--duck-speed) var(--duck-speed-half) linear infinite}
+
+    .surface{position:absolute;bottom:-1.9rem;left:55%;transform:translateX(-50%);background:var(--color-blue-2);width:8rem;height:.5rem;border-radius:1rem;animation:surface-animation var(--duck-speed-half) linear infinite}
+    @keyframes surface-animation{0%,100%{transform:translateX(-50%) scaleX(.9)}50%{transform:translateX(-50%) scaleX(1)}}
+
+    @keyframes foot-ans{0%{transform:translate(-50%,80%) rotate(0deg)}10%{transform:translate(-150%,80%) rotate(10deg)}20%{transform:translate(-150%,10%) rotate(10deg)}40%{transform:translate(400%,10%) rotate(-20deg)}60%{transform:translate(600%,60%) rotate(-20deg)}70%{transform:translate(500%,60%) rotate(0deg)}}
+
+    .duck__inner{animation:bird-up-down var(--duck-speed-half) linear infinite}
+    @keyframes bird-up-down{0%,100%{transform:translateY(.4rem)}50%{transform:translateY(0rem)}}
+    @keyframes eye-animation{0%,20%{transform:scaleY(1)}10%{transform:scaleY(0)}}
+  </style>
+</head>
+<body>
+  <div class="stage" id="stage">
+
+    <!-- Clouds -->
+    <div class="cloud cloud--1" aria-hidden="true"></div>
+    <div class="cloud cloud--2" aria-hidden="true"></div>
+    <div class="cloud cloud--3" aria-hidden="true"></div>
+    <div class="cloud cloud--4" aria-hidden="true"></div>
+
+    <!-- Play button only -->
+    <button class="play-btn" id="playBtn" aria-label="Play animation and background music">
+      <div class="play-btn-inner">
+        <svg class="play-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M5 3v18l15-9L5 3z"/>
+        </svg>
+      </div>
+    </button>
+
+    <!-- Duck area -->
+    <div class="duck__wrapper" id="duckWrapper">
+      <div class="duck" id="duck">
+        <div class="duck duck__inner">
+          <div class="speech-bubble">🔥You're gonna f***ing crush those exams!</div>
+          <div class="duck__mouth"></div>
+          <div class="duck__head">
+            <div class="duck__eye"></div>
+            <div class="duck__eye--shadow"></div>
+            <div class="duck__white"></div>
+          </div>
+          <div class="duck__neck-ring"></div>
+          <div class="duck__neck-stripe"></div>
+          <div class="duck__body"></div>
+          <div class="duck__backpack"><div class="duck__backpack-lock"></div></div>
+        </div>
+        <div class="duck__foot duck__foot--1"></div>
+        <div class="duck__foot duck__foot--2"></div>
+        <div class="surface"></div>
+      </div>
+    </div>
+
+    <!-- Hidden audio element -->
+    <audio id="bgm" src="https://github.com/venti-latte/luckyduck/raw/refs/heads/main/teenagersmcr.mp3" preload="auto" loop></audio>
+
+  </div>
+
+  <script>
+    (function(){
+      const playBtn = document.getElementById('playBtn');
+      const audio = document.getElementById('bgm');
+      const bodyEl = document.body;
+
+      function startExperience(){
+        bodyEl.classList.add('started');
+        if(audio){ audio.volume=0.9; audio.play().catch(()=>{}); }
+        playBtn.removeEventListener('click',startExperience);
+      }
+
+      playBtn.addEventListener('click',startExperience);
+      playBtn.addEventListener('keydown',(e)=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();startExperience();}});
+      window.addEventListener('keydown',(e)=>{if((e.code==='Space'||e.key===' ')&&!bodyEl.classList.contains('started')){e.preventDefault();startExperience();}});
+    })();
+  </script>
+</body>
+</html>
