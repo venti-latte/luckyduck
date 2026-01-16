@@ -46,23 +46,23 @@
     }
 
     /* Play button with soft cartoony style */
-    .play-btn{
-      --size:var(--ui-size);
-      width:var(--size);
-      height:var(--size);
-      border-radius:999px;
-      display:grid;
-      place-items:center;
-      background:#8b5e3c; /* Brown outline */
-      padding:0.3rem;
-      border:none;
-      cursor:pointer;
-      z-index:40;
-      position:absolute;
-      top:50%;
-      left:50%;
-      transform:translate(-50%, -50%);
-      }
+    .play-btn {
+      --size: calc(var(--ui-size) * 2); /* double the original size */
+      width: var(--size);
+      height: var(--size);
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      background: #8b5e3c;
+      padding: 0.7rem;
+      border: none;
+      cursor: pointer;
+      z-index: 40;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
 
     .play-btn-inner{
       width:100%;
